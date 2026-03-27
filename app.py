@@ -31,6 +31,13 @@ CREATE TABLE IF NOT EXISTS email_logs (
 """)
 conn.commit()
 
+# Ensure 'opened' column exists
+try:
+    c.execute("ALTER TABLE email_logs ADD COLUMN opened INTEGER DEFAULT 0")
+    conn.commit()
+except:
+    pass  # column already exists
+
 # ---------------- LOGIN ----------------
 USERS = {
     "user1": "pass1",
@@ -144,7 +151,7 @@ df_logs = pd.read_sql_query(
 
 total_sent = len(df_logs[df_logs["status"] == "SENT"])
 failed = len(df_logs[df_logs["status"] == "FAILED"])
-opened = df_logs["opened"].sum()
+opened = df_logs["opened"].sum() if "opened" in df_logs.columns else 0
 
 open_rate = (opened / total_sent * 100) if total_sent > 0 else 0
 
