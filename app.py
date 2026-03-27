@@ -63,14 +63,31 @@ def clean_email(email):
 def safe_format(template, mapping):
     return template.format_map(defaultdict(str, mapping))
 
-def format_name(name):
-    if not name:
+def format_name(full_name):
+    if not full_name:
         return ""
-    parts = name.strip().split()
-    parts = [p.capitalize() for p in parts]
 
+    prefixes = {"dr", "dr.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "prof", "prof."}
+
+    parts = full_name.strip().split()
+    if not parts:
+        return ""
+
+    parts = [p.capitalize() for p in parts]
+    first_word = parts[0].lower()
+
+    # CASE 1: Prefix present
+    if first_word in prefixes:
+        if len(parts) > 1:
+            return f"{parts[0].replace('.', '')} {parts[1]}"
+        else:
+            return parts[0].replace(".", "")
+
+    # CASE 2: Single letter name
     if len(parts[0]) == 1 and len(parts) > 1:
         return f"Mr {parts[1]}"
+
+    # CASE 3: Normal
     return parts[0]
 
 def track_pixel(email):
@@ -136,27 +153,34 @@ if send_btn and uploaded_file:
         if not email or email in sent_emails:
             continue
 
-        name = format_name(row.get("name", ""))
+        full_name = row.get("name", "")
 
-        body_final = safe_format(body, {"name": name})
+        formatted_name = format_name(full_name)
+
+        # ✅ Separate mappings
+        subject_mapping = {"name": full_name}
+        body_mapping = {"name": formatted_name}
+        
+        subject_final = safe_format(subject, subject_mapping)
+        body_final = safe_format(body, body_mapping)
 
         pixel = track_pixel(email)
 
         html = f"""
         <html>
-        <body>
-        <pre>{body_final}</pre>
-        <img src="{pixel}" width="1" height="1">
-        </body>
+          <body style="font-family: 'Times New Roman', serif; font-size:12px; line-height:1.2;">
+            {body_final.replace("\n", "<br>")}
+            <img src="{pixel}" width="1" height="1">
+          </body>
         </html>
         """
 
         msg = MIMEMultipart()
         msg["From"] = from_email
         msg["To"] = email
-        msg["Subject"] = subject
+        msg["Subject"] = subject_final
         msg.attach(MIMEText(html, "html"))
-
+        
         success = False
 
         for _ in range(3):  # retry
