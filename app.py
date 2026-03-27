@@ -166,10 +166,12 @@ if send_btn and uploaded_file:
 
         pixel = track_pixel(email)
 
+        body_html = body_final.replace("\n", "<br>")
+
         html = f"""
         <html>
-          <body style="font-family: 'Times New Roman', serif; font-size:12px; line-height:1.2;">
-            {body_final.replace("\n", "<br>")}
+          <body style="font-family: 'Times New Roman', serif; font-size:14px; line-height:1.6;">
+            {body_html}
             <img src="{pixel}" width="1" height="1">
           </body>
         </html>
