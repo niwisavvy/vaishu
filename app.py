@@ -29,14 +29,15 @@ CREATE TABLE IF NOT EXISTS email_logs (
     sent_at TEXT
 )
 """)
-conn.commit()
-
 # Ensure 'opened' column exists
 try:
     c.execute("ALTER TABLE email_logs ADD COLUMN opened INTEGER DEFAULT 0")
     conn.commit()
 except:
     pass  # column already exists
+conn.commit()
+
+
 
 # ---------------- LOGIN ----------------
 USERS = {
